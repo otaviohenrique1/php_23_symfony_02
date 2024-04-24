@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Series;
 use App\Repository\SeriesRepository;
-// use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +15,7 @@ class SeriesController extends AbstractController
 {
     public function __construct(
         private SeriesRepository $seriesRepository,
-        // private EntityManagerInterface $entityManager,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -24,13 +24,13 @@ class SeriesController extends AbstractController
     public function seriesList(Request $request): Response
     {
         $seriesList = $this->seriesRepository->findAll();
-        $session = $request->getSession();
-        $successMessage = $session->get('success');
-        $session->remove('success');
+        // $session = $request->getSession();
+        // $successMessage = $session->get('success');
+        // $session->remove('success');
 
         return $this->render('series/index.html.twig', [
             'seriesList' => $seriesList,
-            'successMessage' => $successMessage,
+            // 'successMessage' => $successMessage,
         ]);
     }
 
@@ -45,12 +45,12 @@ class SeriesController extends AbstractController
     {
         $seriesName = $request->request->get(key: 'name');
         $series = new Series($seriesName);
-        $request->getSession()->set('success', "Série \"{$seriesName}\" adicionada com sucesso");
+        // $request->getSession()->set('success', "Série \"{$seriesName}\" adicionada com sucesso");
+        $this->addFlash('success', "Série \"{$seriesName}\" adicionada com sucesso");
         $this->seriesRepository->add($series, flush: true);
         return new RedirectResponse(url: '/series');
     }
 
-    // public function deleteSeries(Request $request): Response
     #[Route(
         '/series/delete/{id}',
         name: 'app_delete_series',
@@ -63,17 +63,26 @@ class SeriesController extends AbstractController
         // $series = $this->entityManager->getReference(Series::class, $id);
         // $this->seriesRepository->remove($series, flush: true);
         $this->seriesRepository->removeById($id);
-        $session = $request->getSession();
-        $session->set('success', 'Série removida com sucesso');
+        $this->addFlash('success', 'Série removida com sucesso');
+        // $session = $request->getSession();
+        // $session->set('success', 'Série removida com sucesso');
         return new RedirectResponse(url: '/series');
     }
 
-    #[Route('/series/edit/{id}', name: 'app_edit_series_form', methods: ['GET'])]
+    #[Route('/series/edit/{series}', name: 'app_edit_series_form', methods: ['GET'])]
     public function editSeriesForm(Series $series): Response
     {
-        return $this->render('series/form.html.twig', [
-            'series'=> $series,
-        ]);
+        return $this->render('series/form.html.twig', compact(var_name:'series'));
+    }
+
+    #[Route('/series/edit/{series}', name: 'app_store_series_changes', methods: ['PATCH'])]
+    public function storeSeriesChanges(Series $series, Request $request): Response
+    {
+        $series->setName($request->request->get(key: 'name'));
+        // $request->getSession()->set('success', "Série \"{$series->getName()}\" editada com sucesso");
+        $this->addFlash('success', "Série \"{$series->getName()}\" editada com sucesso");
+        $this->entityManager->flush();
+        return new RedirectResponse(url: '/series');
     }
 
 }
