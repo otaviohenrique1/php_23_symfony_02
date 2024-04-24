@@ -38,7 +38,7 @@ class SeriesRepository extends ServiceEntityRepository
     }
 
     public function removeById(int $id) {
-        $series = $this->getEntityManager->getReference(Series::class, $id);
+        $series = $this->getEntityManager()->getReference(Series::class, $id);
         $this->remove($series, flush: true);
     }
 

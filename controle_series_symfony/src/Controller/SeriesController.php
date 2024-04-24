@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Series;
 use App\Repository\SeriesRepository;
-use Doctrine\ORM\EntityManagerInterface;
+// use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,18 +15,22 @@ class SeriesController extends AbstractController
 {
     public function __construct(
         private SeriesRepository $seriesRepository,
-        private EntityManagerInterface $entityManager,
+        // private EntityManagerInterface $entityManager,
     ) {
     }
 
     // public function index(Request $request): Response
     #[Route('/series', name: 'app_series', methods: ['GET'])]
-    public function seriesList(): Response
+    public function seriesList(Request $request): Response
     {
         $seriesList = $this->seriesRepository->findAll();
+        $session = $request->getSession();
+        $successMessage = $session->get('success');
+        $session->remove('success');
 
         return $this->render('series/index.html.twig', [
-            'seriesList' => $seriesList
+            'seriesList' => $seriesList,
+            'successMessage' => $successMessage,
         ]);
     }
 
@@ -41,18 +45,35 @@ class SeriesController extends AbstractController
     {
         $seriesName = $request->request->get(key: 'name');
         $series = new Series($seriesName);
+        $request->getSession()->set('success', "Série \"{$seriesName}\" adicionada com sucesso");
         $this->seriesRepository->add($series, flush: true);
         return new RedirectResponse(url: '/series');
     }
 
     // public function deleteSeries(Request $request): Response
-    #[Route('/series/delete/{id}', name: 'app_delete_series', methods: ['DELETE'])]
-    public function deleteSeries(int $id): Response
+    #[Route(
+        '/series/delete/{id}',
+        name: 'app_delete_series',
+        methods: ['DELETE'],
+        requirements: ['id' => '[0-9]+']
+    )]
+    public function deleteSeries(int $id, Request $request): Response
     {
         // $id = $request->attributes->get(key:'id');
         // $series = $this->entityManager->getReference(Series::class, $id);
         // $this->seriesRepository->remove($series, flush: true);
         $this->seriesRepository->removeById($id);
+        $session = $request->getSession();
+        $session->set('success', 'Série removida com sucesso');
         return new RedirectResponse(url: '/series');
     }
+
+    #[Route('/series/edit/{id}', name: 'app_edit_series_form', methods: ['GET'])]
+    public function editSeriesForm(Series $series): Response
+    {
+        return $this->render('series/form.html.twig', [
+            'series'=> $series,
+        ]);
+    }
+
 }
