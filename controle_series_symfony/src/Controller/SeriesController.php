@@ -7,8 +7,8 @@ use App\Form\SeriesType;
 use App\Repository\SeriesRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+// use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+// use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -93,13 +93,24 @@ class SeriesController extends AbstractController
     #[Route('/series/edit/{series}', name: 'app_edit_series_form', methods: ['GET'])]
     public function editSeriesForm(Series $series): Response
     {
-        return $this->render('series/form.html.twig', compact(var_name:'series'));
+        $seriesForm = $this->createForm(SeriesType::class, $series, ['is_edit'=> true,]);
+            
+        return $this->renderForm('series/form.html.twig', compact('seriesForm', 'series'));
+        // return $this->render('series/form.html.twig', compact(var_name:'series'));
     }
 
     #[Route('/series/edit/{series}', name: 'app_store_series_changes', methods: ['PATCH'])]
     public function storeSeriesChanges(Series $series, Request $request): Response
     {
-        $series->setName($request->request->get(key: 'name'));
+        $seriesForm = $this->createForm(SeriesType::class, $series, ['is_edit'=> true,]);
+        $seriesForm->handleRequest($request);
+
+        if (! $seriesForm->isValid()) {
+            return $this->renderForm('series/form.html.twig', compact('seriesForm', 'series'));
+        }
+
+        // $series->setName($request->request->get(key: 'name'));
+
         // $request->getSession()->set('success', "Série \"{$series->getName()}\" editada com sucesso");
         $this->addFlash('success', "Série \"{$series->getName()}\" editada com sucesso");
         $this->entityManager->flush();
