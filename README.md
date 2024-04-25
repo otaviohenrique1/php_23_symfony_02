@@ -1,4 +1,4 @@
-# php_22_symfony_01
+# php_23_symfony_02
 
 Projeto do curso "Symfony Framework: formulários, validação e sessão" da Alura
 
