@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Series;
+use App\Form\SeriesType;
 use App\Repository\SeriesRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,16 +40,34 @@ class SeriesController extends AbstractController
     #[Route('/series/create', name: 'app_series_form', methods: ['GET'])]
     public function addSeriesForm(): Response
     {
-        return $this->render('series/form.html.twig');
+        // $seriesForm = $this->createFormBuilder(new Series(''))
+        //     ->add('name', TextType::class, ['label' => 'Nome:'])
+        //     ->add('save', SubmitType::class, ['label' => 'Adicionar'])
+        //     ->getForm();
+
+        $series = new Series();
+        $seriesForm = $this->createForm(SeriesType::class, $series);
+        return $this->renderForm('series/form.html.twig', compact(var_name: 'seriesForm'));
+        // return $this->render('series/form.html.twig');
     }
 
     #[Route('/series/create', name: 'app_add_series', methods: ['POST'])]
     public function addSeries(Request $request): Response
     {
-        $seriesName = $request->request->get(key: 'name');
-        $series = new Series($seriesName);
+        $series = new Series();
+        $seriesForm = $this
+            ->createForm(SeriesType::class, $series)
+            ->handleRequest($request);
+        if (!$seriesForm->isValid()) {
+            return $this->renderForm('series/form.html.twig', compact(var_name: 'seriesForm'));
+        }
+
+        // $seriesName = $request->request->get(key: 'name');
+        // $series = new Series($seriesName);
+
         // $request->getSession()->set('success', "Série \"{$seriesName}\" adicionada com sucesso");
-        $this->addFlash('success', "Série \"{$seriesName}\" adicionada com sucesso");
+        $this->addFlash('success', "Série \"{$series->getName()}\" adicionada com sucesso");
+
         $this->seriesRepository->add($series, flush: true);
         return new RedirectResponse(url: '/series');
     }
